@@ -83,6 +83,13 @@ const (
 	subscriberGroup         = "serving.knative.dev"
 	subscriberVersion       = "v1"
 
+	dlqURI       = "http://example.com/dlq/"
+	dlqKind      = "Service"
+	dlqName      = "dlq-name"
+	dlqNamespace = "dlq-namespace"
+	dlqGroup     = "serving.knative.dev"
+	dlqVersion   = "v1"
+
 	pingSourceName              = "test-ping-source"
 	testSchedule                = "*/2 * * * *"
 	testContentType             = cloudevents.TextPlain
@@ -118,6 +125,13 @@ var (
 		Group:   subscriberGroup,
 		Version: subscriberVersion,
 		Kind:    subscriberKind,
+	}
+
+	dlqAPIVersion = fmt.Sprintf("%s/%s", dlqGroup, dlqVersion)
+	dlqGVK        = metav1.GroupVersionKind{
+		Group:   dlqGroup,
+		Version: dlqVersion,
+		Kind:    dlqKind,
 	}
 	k8sServiceGVK = metav1.GroupVersionKind{
 		Group:   "",
@@ -641,7 +655,7 @@ func TestReconcile(t *testing.T) {
 					WithTriggerUID(triggerUID),
 					WithTriggerSubscriberURI(subscriberURI),
 					WithInitTriggerConditions,
-					WithTriggerDeadLeaderSink(brokerDestv1.Ref, ""),
+					WithTriggerDeadLetterSink(brokerDestv1.Ref, ""),
 				)}...),
 			WantEvents: []string{
 				Eventf(corev1.EventTypeWarning, "InternalError", `brokers.eventing.knative.dev "testsink" not found`),
@@ -650,7 +664,7 @@ func TestReconcile(t *testing.T) {
 				Object: NewTrigger(triggerName, testNS, brokerName,
 					WithTriggerUID(triggerUID),
 					WithTriggerSubscriberURI(subscriberURI),
-					WithTriggerDeadLeaderSink(brokerDestv1.Ref, ""),
+					WithTriggerDeadLetterSink(brokerDestv1.Ref, ""),
 					// The first reconciliation will initialize the status conditions.
 					WithInitTriggerConditions,
 					WithTriggerStatusSubscriberURI(subscriberURI),
@@ -1330,6 +1344,24 @@ func makeSubscriberAddressableAsUnstructured(subscriberNamespace string) *unstru
 			"status": map[string]interface{}{
 				"address": map[string]interface{}{
 					"url": subscriberURI,
+				},
+			},
+		},
+	}
+}
+
+func makeDLQAddressableAsUnstructured(dlqNamespace string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": dlqAPIVersion,
+			"kind":       dlqKind,
+			"metadata": map[string]interface{}{
+				"namespace": dlqNamespace,
+				"name":      dlqName,
+			},
+			"status": map[string]interface{}{
+				"address": map[string]interface{}{
+					"url": dlqURI,
 				},
 			},
 		},
