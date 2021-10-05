@@ -83,13 +83,6 @@ const (
 	subscriberGroup         = "serving.knative.dev"
 	subscriberVersion       = "v1"
 
-	dlqURI       = "http://example.com/dlq/"
-	dlqKind      = "Service"
-	dlqName      = "dlq-name"
-	dlqNamespace = "dlq-namespace"
-	dlqGroup     = "serving.knative.dev"
-	dlqVersion   = "v1"
-
 	pingSourceName              = "test-ping-source"
 	testSchedule                = "*/2 * * * *"
 	testContentType             = cloudevents.TextPlain
@@ -125,13 +118,6 @@ var (
 		Group:   subscriberGroup,
 		Version: subscriberVersion,
 		Kind:    subscriberKind,
-	}
-
-	dlqAPIVersion = fmt.Sprintf("%s/%s", dlqGroup, dlqVersion)
-	dlqGVK        = metav1.GroupVersionKind{
-		Group:   dlqGroup,
-		Version: dlqVersion,
-		Kind:    dlqKind,
 	}
 	k8sServiceGVK = metav1.GroupVersionKind{
 		Group:   "",
@@ -1344,24 +1330,6 @@ func makeSubscriberAddressableAsUnstructured(subscriberNamespace string) *unstru
 			"status": map[string]interface{}{
 				"address": map[string]interface{}{
 					"url": subscriberURI,
-				},
-			},
-		},
-	}
-}
-
-func makeDLQAddressableAsUnstructured(dlqNamespace string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": dlqAPIVersion,
-			"kind":       dlqKind,
-			"metadata": map[string]interface{}{
-				"namespace": dlqNamespace,
-				"name":      dlqName,
-			},
-			"status": map[string]interface{}{
-				"address": map[string]interface{}{
-					"url": dlqURI,
 				},
 			},
 		},
