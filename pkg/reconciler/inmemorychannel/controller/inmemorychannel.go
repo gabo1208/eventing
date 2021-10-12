@@ -150,17 +150,6 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, imc *v1.InMemoryChannel)
 		return errors.New("there are no endpoints ready for Dispatcher service")
 	}
 
-	imc.Status.MarkEndpointsTrue()
-	ref := corev1.ObjectReference{
-		Name:       imc.Name,
-		Namespace:  imc.Namespace,
-		APIVersion: imc.APIVersion,
-		Kind:       imc.Kind,
-	}
-	track := r.channelableTracker.TrackInNamespace(ctx, imc)
-	if err := track(ref); err != nil {
-		return fmt.Errorf("unable to track changes to the Channel DLS: %v %s", err, ref.APIVersion)
-	}
 	if imc.Spec.Delivery != nil && imc.Spec.Delivery.DeadLetterSink != nil {
 		deadLetterSinkUri, err := r.uriResolver.URIFromDestinationV1(ctx, *imc.Spec.Delivery.DeadLetterSink, imc)
 		logging.FromContext(ctx).Info("HEREEE ", deadLetterSinkUri, err)
