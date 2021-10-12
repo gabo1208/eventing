@@ -153,3 +153,18 @@ func (imcs *InMemoryChannelStatus) MarkEndpointsUnknown(reason, messageFormat st
 func (imcs *InMemoryChannelStatus) MarkEndpointsTrue() {
 	imcCondSet.Manage(imcs).MarkTrue(InMemoryChannelConditionEndpointsReady)
 }
+
+func (imcs *InMemoryChannelStatus) MarkDeadLetterSinkResolvedSucceeded(deadLetterSinkURI *apis.URL) {
+	imcs.DeadLetterSinkURI = deadLetterSinkURI
+	chCondSet.Manage(imcs).MarkTrue(ChannelConditionDeadLetterSinkResolved)
+}
+
+func (imcs *InMemoryChannelStatus) MarkDeadLetterSinkNotConfigured() {
+	imcs.DeadLetterSinkURI = nil
+	chCondSet.Manage(imcs).MarkTrueWithReason(ChannelConditionDeadLetterSinkResolved, "DeadLetterSinkNotConfigured", "No dead letter sink is configured.")
+}
+
+func (imcs *InMemoryChannelStatus) MarkDeadLetterSinkResolvedFailed(reason, messageFormat string, messageA ...interface{}) {
+	imcs.DeadLetterSinkURI = nil
+	chCondSet.Manage(imcs).MarkFalse(ChannelConditionDeadLetterSinkResolved, reason, messageFormat, messageA...)
+}

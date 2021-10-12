@@ -96,6 +96,7 @@ func (r *Reconciler) reconcileBackingChannel(ctx context.Context, channelResourc
 		logger.Errorw("Error getting lister for Channel", zap.Any("backingChannel", backingChannelObjRef), zap.Error(err))
 		return nil, err
 	}
+
 	backingChannel, err := lister.ByNamespace(backingChannelObjRef.Namespace).Get(backingChannelObjRef.Name)
 	// If the resource doesn't exist, we'll create it
 	if err != nil {
