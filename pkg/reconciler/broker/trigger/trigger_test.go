@@ -100,6 +100,8 @@ const (
 apiVersion: "messaging.knative.dev/v1"
 kind: "InMemoryChannel"
 `
+
+	dlsURL = "http://example.com"
 )
 
 var (
