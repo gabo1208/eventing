@@ -115,6 +115,8 @@ var (
 
 	subscriptionName = fmt.Sprintf("%s-%s-%s", brokerName, triggerName, triggerUID)
 
+	dlsName = "test-dls"
+
 	subscriberAPIVersion = fmt.Sprintf("%s/%s", subscriberGroup, subscriberVersion)
 	subscriberGVK        = metav1.GroupVersionKind{
 		Group:   subscriberGroup,
