@@ -726,7 +726,6 @@ func TestReconcile(t *testing.T) {
 					WithInitTriggerConditions,
 				),
 			}},
-			WantErr: true,
 		}, {
 			Name: "Trigger has no dls ref, Broker has a valid dls ref, Trigger fallbacks to it and goes ready",
 			Key:  testKey,
