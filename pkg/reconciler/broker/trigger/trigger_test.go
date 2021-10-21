@@ -100,8 +100,6 @@ const (
 apiVersion: "messaging.knative.dev/v1"
 kind: "InMemoryChannel"
 `
-
-	dlsURL = "http://example.com"
 )
 
 var (
@@ -114,8 +112,6 @@ var (
 	ingressServiceName = "broker-ingress"
 
 	subscriptionName = fmt.Sprintf("%s-%s-%s", brokerName, triggerName, triggerUID)
-
-	dlsName = "test-dls"
 
 	subscriberAPIVersion = fmt.Sprintf("%s/%s", subscriberGroup, subscriberVersion)
 	subscriberGVK        = metav1.GroupVersionKind{
@@ -313,7 +309,7 @@ func TestReconcile(t *testing.T) {
 				NewTrigger(triggerName, testNS, brokerName,
 					WithTriggerUID(triggerUID),
 					WithTriggerSubscriberURI(subscriberURI),
-					WithTriggerDeadLeaderSink(nil, dlsURL)),
+					WithTriggerDeadLetterSink(nil, dlsURL)),
 			},
 			WantCreates: []runtime.Object{
 				resources.NewSubscription(makeTrigger(testNS), createTriggerChannelRef(), makeBrokerRef(), makeServiceURI(), makeDelivery(nil, dlsURL, nil, nil, nil)),
@@ -322,14 +318,13 @@ func TestReconcile(t *testing.T) {
 				Object: NewTrigger(triggerName, testNS, brokerName,
 					WithTriggerUID(triggerUID),
 					WithTriggerSubscriberURI(subscriberURI),
-					WithTriggerDeadLeaderSink(nil, dlsURL),
+					WithTriggerDeadLetterSink(nil, dlsURL),
 					WithTriggerBrokerReady(),
 					WithTriggerDependencyReady(),
 					WithTriggerSubscriberResolvedSucceeded(),
 					WithTriggerSubscribedUnknown("SubscriptionNotConfigured", "Subscription has not yet been reconciled."),
 					WithTriggerStatusSubscriberURI(subscriberURI),
-					WithTriggerStatusDeadLetterSinkURI(dlsURL),
-					WithTriggerDeadLetterSinkResolvedSucceeded()),
+					WithTriggerDeadLetterSinkResolvedSucceeded(dlsURL)),
 			}},
 		}, {
 			Name: "Subscription Create fails",
@@ -674,7 +669,7 @@ func TestReconcile(t *testing.T) {
 					WithTriggerUID(triggerUID),
 					WithTriggerSubscriberRef(k8sServiceGVK, subscriberName, testNS),
 					WithInitTriggerConditions,
-					WithTriggerDeadLeaderSink(dlsSVCDest.Ref, ""),
+					WithTriggerDeadLetterSink(dlsSVCDest.Ref, ""),
 				)}...),
 			WantStatusUpdates: []clientgotesting.UpdateActionImpl{{
 				Object: NewTrigger(triggerName, testNS, brokerName,
@@ -682,14 +677,13 @@ func TestReconcile(t *testing.T) {
 					WithTriggerSubscriberRef(k8sServiceGVK, subscriberName, testNS),
 					// The first reconciliation will initialize the status conditions.
 					WithInitTriggerConditions,
-					WithTriggerDeadLeaderSink(dlsSVCDest.Ref, ""),
+					WithTriggerDeadLetterSink(dlsSVCDest.Ref, ""),
 					WithTriggerDependencyReady(),
 					WithTriggerBrokerReady(),
 					WithTriggerSubscriptionNotConfigured(),
 					WithTriggerStatusSubscriberURI(k8sServiceResolvedURI),
 					WithTriggerSubscriberResolvedSucceeded(),
-					WithTriggerStatusDeadLetterSinkURI("http://test-dls.test-namespace.svc.cluster.local"),
-					WithTriggerDeadLetterSinkResolvedSucceeded(),
+					WithTriggerDeadLetterSinkResolvedSucceeded("http://test-dls.test-namespace.svc.cluster.local"),
 				),
 			}},
 			WantCreates: []runtime.Object{
@@ -708,7 +702,7 @@ func TestReconcile(t *testing.T) {
 					WithChannelAPIVersionAnnotation(triggerChannelAPIVersion),
 					WithChannelKindAnnotation(triggerChannelKind),
 					WithChannelNameAnnotation(triggerChannelName),
-					WithDeadLeaderSink(brokerDestv1.Ref, ""),
+					WithDeadLetterSink(brokerDestv1.Ref, ""),
 					WithDLSResolvedFailed(),
 				),
 				makeSubscriberAddressableAsUnstructured(testNS),
@@ -741,7 +735,7 @@ func TestReconcile(t *testing.T) {
 					WithChannelAPIVersionAnnotation(triggerChannelAPIVersion),
 					WithChannelKindAnnotation(triggerChannelKind),
 					WithChannelNameAnnotation(triggerChannelName),
-					WithDeadLeaderSink(dlsSVCDest.Ref, ""),
+					WithDeadLetterSink(dlsSVCDest.Ref, ""),
 					WithBrokerStatusDLSURI(brokerDLSURI),
 				),
 				createChannel(testNS, true),
@@ -775,8 +769,7 @@ func TestReconcile(t *testing.T) {
 					WithTriggerSubscriptionNotConfigured(),
 					WithTriggerStatusSubscriberURI(subscriberURI),
 					WithTriggerSubscriberResolvedSucceeded(),
-					WithTriggerStatusDeadLetterSinkURI("http://test-dls.test-namespace.svc.cluster.local"),
-					WithTriggerDeadLetterSinkResolvedSucceeded(),
+					WithTriggerDeadLetterSinkResolvedSucceeded("http://test-dls.test-namespace.svc.cluster.local"),
 				),
 			}},
 		}, {
@@ -795,7 +788,7 @@ func TestReconcile(t *testing.T) {
 					WithChannelAPIVersionAnnotation(triggerChannelAPIVersion),
 					WithChannelKindAnnotation(triggerChannelKind),
 					WithChannelNameAnnotation(triggerChannelName),
-					WithDeadLeaderSink(k8sSVCDest.Ref, ""),
+					WithDeadLetterSink(k8sSVCDest.Ref, ""),
 					WithBrokerStatusDLSURI(k8sSVCDest.URI),
 				),
 				createChannel(testNS, true),
@@ -805,7 +798,7 @@ func TestReconcile(t *testing.T) {
 					WithTriggerUID(triggerUID),
 					WithTriggerSubscriberURI(subscriberURI),
 					WithInitTriggerConditions,
-					WithTriggerDeadLeaderSink(dlsSVCDest.Ref, "")),
+					WithTriggerDeadLetterSink(dlsSVCDest.Ref, "")),
 			},
 			WantErr: false,
 			WantCreates: []runtime.Object{
@@ -827,12 +820,11 @@ func TestReconcile(t *testing.T) {
 					WithInitTriggerConditions,
 					WithTriggerDependencyReady(),
 					WithTriggerSubscribed(),
-					WithTriggerDeadLeaderSink(dlsSVCDest.Ref, ""),
+					WithTriggerDeadLetterSink(dlsSVCDest.Ref, ""),
 					WithTriggerSubscriptionNotConfigured(),
 					WithTriggerStatusSubscriberURI(subscriberURI),
 					WithTriggerSubscriberResolvedSucceeded(),
-					WithTriggerStatusDeadLetterSinkURI("http://test-dls.test-namespace.svc.cluster.local"),
-					WithTriggerDeadLetterSinkResolvedSucceeded(),
+					WithTriggerDeadLetterSinkResolvedSucceeded("http://test-dls.test-namespace.svc.cluster.local"),
 				),
 			}},
 		}, {
